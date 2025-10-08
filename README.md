@@ -2,8 +2,6 @@
 
 This is the code of the ICCV2023 paper "Chinese Text Recognition with A Pre-Trained CLIP-Like Model Through Image-IDS Aligning" (Oral).
 
-![architecture](./architecture.png)
-
 ## Dependencies
 Use the configuration file "env.yaml" to create the environment.
 ```python
@@ -22,21 +20,11 @@ CUDA_VISIBLE_DEVICES=GPU_NUM python ./CCR-CLIP/main.py
 ```
 * After pre-training the CCR-CLIP model, the canonical representation of each Chinese character can be obtained. Then, the learned representations are used as the supervision for training the CTR model.
 ```python
-CUDA_VISIBLE_DEVICES=GPU_NUM python train.py
+CUDA_VISIBLE_DEVICES=GPU_NUM python main.py
 ```
 
 ## Inference 
 * Fill the resume_model and modify the inference dataset path in config.py, and execute the following command to inference
 ```python
 CUDA_VISIBLE_DEVICES=GPU_NUM python inference.py
-```
-
-## Citation
-```python
-@inproceedings{yu2023chinese,
-  title={Chinese Text Recognition with A Pre-Trained CLIP-Like Model Through Image-IDS Aligning},
-  author={Yu, Haiyang and Wang, Xiaocong and Li, Bin and Xue, Xiangyang},
-  booktitle={ICCV},
-  year={2023},
-}
 ```
