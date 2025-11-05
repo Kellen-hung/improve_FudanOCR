@@ -7,7 +7,7 @@ from util import get_inference_data, get_alphabet, get_radical_alphabet, tensor2
 from model_loader import build_main_model, build_clip_model
 from feature_extractor import extract_text_features
 
-def inference(img_dir):
+def preprocessing(img_dir):
     # 準備模型
     if config['resume_model']:
         model = build_main_model()
@@ -16,21 +16,22 @@ def inference(img_dir):
         print(f"\033[31m[Error] The \'resume model\' in config.py can not be empty!!! \033[0m")
         return
     
-    saver()
-    output_file = './history/{}/result.txt'.format(config['exp_name'])
-    
+    # saver()
+    # output_file = './history/{}/result.txt'.format(config['exp_name'])
+        
     # 準備字典
     alphabet = get_alphabet()
     radical_alphabet = get_radical_alphabet()
-
+    
     # 準備 CLIP text feature
     clip_model = build_clip_model(len(radical_alphabet))
     text_features = extract_text_features(clip_model, radical_alphabet, config['alpha_path'])
-
+    
     # 讀 inference 資料
     dataloader = get_inference_data(img_dir)
-    # print(dataloader)
-    # return
+    return model, alphabet, clip_model, text_features, dataloader
+
+def inference(model, alphabet, clip_model, text_features, dataloader):
     
     total = 0
     results = []
@@ -46,7 +47,7 @@ def inference(img_dir):
 
             for i in range(max_length):
                 length_tmp = torch.zeros(batch).long().cuda() + i + 1
-                result = model(images, length_tmp, pred, conv_feature=image_features, test=True)
+                result = model(image=images, text_length=length_tmp, text_input=pred, conv_feature=image_features, test=True)
                 prediction = result['pred'][:, -1:, :].squeeze()
                 prediction = prediction / prediction.norm(dim=1, keepdim=True)
                 prediction = prediction @ text_features.t()
@@ -66,13 +67,14 @@ def inference(img_dir):
                 results.append((fnames[i], text_out))
                 print(f"{fnames[i]} -> {text_out}")
                 total += 1
+    return results
+    # # 存結果
+    # with open(output_file, "w", encoding="utf-8") as f:
+    #     for fname, pred in results:
+    #         f.write(f"{fname}\t{pred}\n")
 
-    # 存結果
-    with open(output_file, "w", encoding="utf-8") as f:
-        for fname, pred in results:
-            f.write(f"{fname}\t{pred}\n")
-
-    print(f"\033[35m[info] Done! Processed {total} images. Results saved to {output_file}\033[0m")
+    # print(f"\033[35m[info] Done! Processed {total} images. Results saved to {output_file}\033[0m")
 
 if __name__ == "__main__":
-    inference(config['inference_dataset'])
+    model, alphabet, clip_model, text_features, dataloader = preprocessing(config['inference_dataset'])
+    results = inference(model, alphabet, clip_model, text_features, dataloader)
