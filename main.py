@@ -49,11 +49,12 @@ def main():
         
         # train and validation
         for epoch in range(1, config['epoch']+1):
-            # 備份
+            # backup
             torch.save(model.state_dict(), './history/{}/model.pth'.format(config['exp_name']))
             
             for iteration, data in enumerate(train_loader):
                 image, label, index = data
+                # normalization
                 image = torch.nn.functional.interpolate(image, size=(config['imageH'], config['imageW']))
 
                 length, text_input, text_gt, _ = converter(label)

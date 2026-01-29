@@ -4,10 +4,40 @@ import sys
 import random
 import torchvision.transforms as transforms
 import os
+import cv2
+import numpy as np
 
 from PIL import Image
 from torch.utils.data.sampler import Sampler
 from torch.utils.data import Dataset
+
+def preprocess_inference_image(img_path):
+    """推論時的固定前處理，保持與訓練一致"""
+    img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+    if img is None:
+        raise ValueError(f"Cannot read image: {img_path}")
+
+    # # === (1) 去除背景不均 (保留淡筆畫) ===
+    # bg = cv2.GaussianBlur(img, (51, 51), 0)
+    # img = cv2.addWeighted(img, 1.5, bg, -0.5, 0)
+    # cv2.imwrite('./test01.png', img)
+
+    # # # === (2) 局部對比增強 CLAHE ===
+    # # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    # # img = clahe.apply(img)
+    # # cv2.imwrite('./test02.png', img)
+
+    # # === (3) 輕微銳化 ===
+    # blur_small = cv2.GaussianBlur(img, (3, 3), 0)
+    # img = cv2.addWeighted(img, 1.2, blur_small, -0.2, 0)
+    # cv2.imwrite('./test03.png', img)
+
+    # # === (4) 限制範圍 ===
+    # img = np.clip(img, 0, 255).astype(np.uint8)
+    # cv2.imwrite('./test04.png', img)
+
+    # # === (5) 轉 PIL Image 給 transform 用 ===
+    return Image.fromarray(img).convert("RGB")
 
 class InferenceDataset(Dataset):
     def __init__(self, img_dir, transform=None):
@@ -22,7 +52,7 @@ class InferenceDataset(Dataset):
     def __getitem__(self, idx):
         fname = self.fnames[idx]
         path = os.path.join(self.img_dir, fname)
-        img = Image.open(path).convert("RGB")
+        img = preprocess_inference_image(path)
         if self.transform:
             img = self.transform(img)
         return img, fname
